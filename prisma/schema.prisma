@@ -1,0 +1,92 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  AnakKost
+  BapakKost
+}
+
+enum Bayar {
+  Transfer
+  Qris
+  Ewallet
+}
+
+enum StatusKamar {
+  Tersedia
+  TidakTersedia
+}
+
+enum StatusBayar {
+  Menunggu
+  SudahDibayar
+  BelumDibayar
+}
+
+enum StatusBooking {
+  Menunggu
+  Terverifikasi
+}
+
+model User {
+  id       Int         @id @unique @default(autoincrement())
+  name     String      @db.VarChar(50)
+  email    String      @db.VarChar(100)
+  password String      @db.VarChar(225)
+  nomortlp String      @db.VarChar(12)
+  role     Role        @default(AnakKost)
+  pemesanan     Pemesanan[]
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+}
+
+model Kamar {
+  room_id   Int      @id @default(autoincrement())
+  room_number Int
+  price       Int
+  room_capacity   Int
+  status      StatusKamar @default(Tersedia)
+  deskripsi   String
+  picture     String @default("")
+  pemesanan   Pemesanan[]
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+}
+
+model Pemesanan {
+  id_pemesanan   Int           @id @default(autoincrement())
+  id_user        Int           @unique
+  room_id        Int           @unique
+  price          Int
+  tanggal_mulai  DateTime
+  tanggal_akhir  DateTime
+  status_booking StatusBooking @default(Menunggu)
+  user           User          @relation(fields: [id_user], references: [id])
+  kamar          Kamar         @relation(fields: [room_id], references: [room_id])
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+  pembayaran     Pembayaran[]
+}
+
+model Pembayaran {
+  id_pembayaran      Int         @id @default(autoincrement())
+  id_pemesanan       Int         @unique
+  pemesanan          Pemesanan   @relation(fields: [id_pemesanan], references: [id_pemesanan])
+  jumlah_pembayaran  Int
+  metode_pembayaran  Bayar
+  status_pembayaran  StatusBayar @default(SudahDibayar)
+  createdAt          DateTime    @default(now())
+  updatedAt          DateTime    @updatedAt
+}
